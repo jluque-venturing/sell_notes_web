@@ -17,7 +17,7 @@ export default function App() {
   const { toasts, dismiss } = useToasts()
   const { sales, addSale, deleteSale, clearSales } = useSales()
   const { products, addProduct, updateProduct, deleteProduct, addOption, updateOption, deleteOption } = useProducts()
-  const { setup, saveSetup } = useDailySetup()
+  const { setup } = useDailySetup()
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [showEndOfDay, setShowEndOfDay] = useState(false)
