@@ -18,7 +18,7 @@ export default function App() {
   const { toasts, dismiss } = useToasts()
   const { sales, addSale, deleteSale, clearSales } = useSales()
   const { products, addProduct, updateProduct, deleteProduct, addOption, updateOption, deleteOption } = useProducts()
-  const { productIds: todayProductIds, source: setupSource } = useTodaySetup()
+  const { productIds: todayProductIds, source: setupSource, reload: reloadSetup } = useTodaySetup()
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [showEndOfDay, setShowEndOfDay] = useState(false)
@@ -146,7 +146,7 @@ export default function App() {
         <SettingsModal
           products={products}
           todaySource={setupSource}
-          onClose={() => setShowSettings(false)}
+          onClose={() => { setShowSettings(false); reloadSetup() }}
         />
       )}
 
@@ -159,7 +159,7 @@ export default function App() {
           onAddOption={addOption}
           onUpdateOption={updateOption}
           onDeleteOption={deleteOption}
-          onClose={() => setShowAdmin(false)}
+          onClose={() => { setShowAdmin(false); reloadSetup() }}
         />
       )}
 
