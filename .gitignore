@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claves de service account de Google - NUNCA commitear
+ventas-jcp-campamento-*.json
+*service-account*.json
+*gcp-key*.json
