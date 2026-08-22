@@ -41,5 +41,5 @@ export function useTodaySetup() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  return { productIds, source, loading }
+  return { productIds, source, loading, reload: load }
 }
