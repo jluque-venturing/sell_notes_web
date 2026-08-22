@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ProductsManager } from './ProductsManager'
 import { DailySetup } from './DailySetup'
+import { ReviewCloses } from './ReviewCloses'
 import type { Product, ProductOption } from '../../types'
 
 interface Props {
@@ -14,11 +15,11 @@ interface Props {
   onClose: () => void
 }
 
-const TABS = ['Día', 'Productos'] as const
+const TABS = ['Revisar', 'Día', 'Productos'] as const
 type Tab = typeof TABS[number]
 
 export function AdminPanel(props: Props) {
-  const [tab, setTab] = useState<Tab>('Día')
+  const [tab, setTab] = useState<Tab>('Revisar')
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-end justify-center z-50">
@@ -38,6 +39,9 @@ export function AdminPanel(props: Props) {
         </div>
 
         <div className="overflow-y-auto flex-1 p-4">
+          {tab === 'Revisar' && (
+            <ReviewCloses />
+          )}
           {tab === 'Día' && (
             <DailySetup products={props.products} />
           )}

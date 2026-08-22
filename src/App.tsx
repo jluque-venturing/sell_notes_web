@@ -6,10 +6,11 @@ import { EndOfDayModal } from './components/EndOfDayModal'
 import { AdminGate } from './components/admin/AdminGate'
 import { AdminPanel } from './components/admin/AdminPanel'
 import { PinConfigModal } from './components/admin/PinConfigModal'
+import { SettingsModal } from './components/SettingsModal'
 import { ToastContainer } from './components/ToastContainer'
 import { useSales } from './hooks/useSales'
 import { useProducts } from './hooks/useProducts'
-import { useDailySetup } from './hooks/useDailySetup'
+import { useTodaySetup } from './hooks/useTodaySetup'
 import { useToasts } from './hooks/useToasts'
 import type { Product } from './types'
 
@@ -17,13 +18,14 @@ export default function App() {
   const { toasts, dismiss } = useToasts()
   const { sales, addSale, deleteSale, clearSales } = useSales()
   const { products, addProduct, updateProduct, deleteProduct, addOption, updateOption, deleteOption } = useProducts()
-  const { setup } = useDailySetup()
+  const { productIds: todayProductIds, source: setupSource } = useTodaySetup()
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [showEndOfDay, setShowEndOfDay] = useState(false)
   const [showAdminGate, setShowAdminGate] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
   const [showPinConfig, setShowPinConfig] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   const tapCountRef = useRef(0)
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -39,7 +41,7 @@ export default function App() {
   }
 
   const todayProducts = products.filter(
-    (p) => p.is_active && (setup?.product_ids ?? []).includes(p.id)
+    (p) => p.is_active && todayProductIds.includes(p.id)
   )
 
   function handleRegister(params: {
@@ -78,6 +80,16 @@ export default function App() {
             aria-label="admin"
           >
             <span className="text-gray-700 text-xs">●</span>
+          </button>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-300 active:scale-90 transition-all duration-100"
+            aria-label="Ajustes"
+          >
+            <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
           </button>
           <h1 className="font-bold text-orange-400 text-lg">Ventas</h1>
         </div>
@@ -128,6 +140,14 @@ export default function App() {
 
       {showPinConfig && (
         <PinConfigModal onClose={() => setShowPinConfig(false)} />
+      )}
+
+      {showSettings && (
+        <SettingsModal
+          products={products}
+          todaySource={setupSource}
+          onClose={() => setShowSettings(false)}
+        />
       )}
 
       {showAdmin && (

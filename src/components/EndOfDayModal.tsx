@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { supabase, todayISO, formatDate } from '../lib/supabase'
 import { logError } from '../lib/errorLog'
-import type { Sale, Product } from '../types'
+import { notifyTelegram } from '../lib/api'
+import type { Sale, Product, SaleSnapshotItem } from '../types'
 
 interface Props {
   sales: Sale[]
@@ -9,16 +10,7 @@ interface Props {
   onClose: () => void
 }
 
-interface SaleSnapshotItem {
-  sale_number: number
-  product_label: string
-  quantity_label: string
-  quantity_value: number
-  amount: number
-  payment_type: string
-  mp_amount: number | null
-  efectivo_amount: number | null
-}
+type TelegramState = 'idle' | 'sending' | 'sent' | 'failed'
 
 export function EndOfDayModal({ sales, products, onClose }: Props) {
   function resolveLabel(sale: Sale): string {
@@ -44,6 +36,8 @@ export function EndOfDayModal({ sales, products, onClose }: Props) {
   const [comments, setComments] = useState('')
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [telegram, setTelegram] = useState<TelegramState>('idle')
+  const [closeId, setCloseId] = useState<string | null>(null)
 
   const cashNum = parseFloat(cashInBox) || 0
   const changeNum = parseFloat(changeLeave) || 0
@@ -62,21 +56,39 @@ export function EndOfDayModal({ sales, products, onClose }: Props) {
       payment_type: s.payment_type,
       mp_amount: s.mp_amount ?? null,
       efectivo_amount: s.efectivo_amount ?? null,
+      sold_at: s.created_at,
     }))
-    const { error } = await supabase.from('day_closes').insert({
-      close_date: todayISO(),
-      total_cash: cashNum,
-      change_amount: changeNum,
-      treasurer_amount: treasurer,
-      comments: comments || null,
-      sales_snapshot: snapshot,
-    })
+    const { data, error } = await supabase
+      .from('day_closes')
+      .insert({
+        close_date: todayISO(),
+        total_cash: cashNum,
+        change_amount: changeNum,
+        treasurer_amount: treasurer,
+        comments: comments || null,
+        sales_snapshot: snapshot,
+      })
+      .select()
+      .single()
     setSaving(false)
-    if (error) {
-      logError('Cierre del día', error)
+    if (error || !data) {
+      logError('Cierre del día', error ?? 'sin datos')
       return
     }
     setSaved(true)
+    setCloseId(data.id)
+    sendToTelegram(data.id)
+  }
+
+  async function sendToTelegram(id: string) {
+    setTelegram('sending')
+    try {
+      await notifyTelegram(id)
+      setTelegram('sent')
+    } catch (err) {
+      setTelegram('failed')
+      logError('Enviar cierre a Telegram', err)
+    }
   }
 
   return (
@@ -157,9 +169,30 @@ export function EndOfDayModal({ sales, products, onClose }: Props) {
             <div className="text-center py-4">
               <div className="text-5xl mb-3">✓</div>
               <p className="font-bold text-gray-100 mb-1">Día cerrado</p>
-              <p className="text-sm text-gray-400 mb-5">
+              <p className="text-sm text-gray-400 mb-4">
                 Tesorero lleva: <strong className="text-amber-400">${treasurer.toFixed(0)}</strong>
               </p>
+
+              {telegram === 'sending' && (
+                <p className="text-xs text-gray-500 mb-5">Enviando la lista por Telegram...</p>
+              )}
+              {telegram === 'sent' && (
+                <p className="text-xs text-emerald-400 mb-5">✓ Lista enviada por Telegram</p>
+              )}
+              {telegram === 'failed' && (
+                <div className="mb-5">
+                  <p className="text-xs text-amber-400 mb-2">
+                    No se pudo enviar por Telegram. El cierre quedó guardado igual.
+                  </p>
+                  <button
+                    onClick={() => closeId && sendToTelegram(closeId)}
+                    className="text-xs font-semibold text-orange-400 underline active:scale-95 transition-all duration-100"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              )}
+
               <button
                 onClick={onClose}
                 className="w-full py-3 rounded-xl bg-gray-700 text-gray-300 font-semibold active:scale-95 transition-all duration-100"

@@ -21,6 +21,12 @@ export interface DailySetup {
   product_ids: string[]
 }
 
+export interface PermanentSetup {
+  id: number
+  product_ids: string[]
+  updated_at: string
+}
+
 export type PaymentType = 'mp' | 'efectivo' | 'excepcion'
 
 export interface Sale {
@@ -39,6 +45,24 @@ export interface Sale {
   _error?: boolean
 }
 
+export interface SaleSnapshotItem {
+  sale_number: number
+  product_label: string
+  quantity_label: string
+  quantity_value: number
+  amount: number
+  payment_type: string
+  mp_amount: number | null
+  efectivo_amount: number | null
+  sold_at?: string | null
+}
+
+export interface ReviewedSaleItem extends SaleSnapshotItem {
+  ok: boolean
+  operation_number: string | null
+  original_amount: number
+}
+
 export interface DayClose {
   id: string
   close_date: string
@@ -47,4 +71,10 @@ export interface DayClose {
   treasurer_amount: number | null
   comments: string | null
   created_at: string
+  sales_snapshot: SaleSnapshotItem[]
+  telegram_sent_at: string | null
+  confirmed_at: string | null
+  sheet_synced_at: string | null
+  sheet_rows_added: number | null
+  reviewed_snapshot: ReviewedSaleItem[] | null
 }
